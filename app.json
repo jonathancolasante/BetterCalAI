@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Personal Food Log",
+    "slug": "personal-food-log",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android"],
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "bundleIdentifier": "com.example.personalfoodlog",
+      "infoPlist": {
+        "NSCameraUsageDescription": "We need access to take a picture of your food."
+      }
+    },
+    "android": {
+      "package": "com.example.personalfoodlog",
+      "permissions": ["CAMERA"]
+    }
+  }
+}

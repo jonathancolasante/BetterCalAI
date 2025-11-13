@@ -26,7 +26,8 @@ type FoodResponse = {
 
 // TODO: replace with your API Gateway invoke URL
 const API_URL =
-  'https://YOUR_API_ID.execute-api.YOUR_REGION.amazonaws.com/prod/analyze-food';
+  'https://w0swuxypu7.execute-api.us-east-2.amazonaws.com/Dev/analyze';
+const API_KEY = 'DuVVUxNjFb9mH0pMCMMJW2iagBYuAY3J3cBltb2A';
 
 const App: React.FC = () => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -82,8 +83,11 @@ const App: React.FC = () => {
 
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: resized.base64 }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({ image: resized.base64 }),
       });
 
       const data = (await response.json()) as FoodResponse;

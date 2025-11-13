@@ -9,14 +9,14 @@ Minimal proof-of-concept: snap a food photo in the Expo app, upload to AWS, and 
 
 ## Frontend (Expo) Setup
 1. Install the Expo CLI prerequisites (Node.js 18+, Expo Go on your phone, Android/iOS emulator as needed).
-2. Bootstrap dependencies:
+2. Bootstrap dependencies (installs Expo, TypeScript, and type definitions):
    ```sh
    cd mobile-app
    npm install
    npx expo install expo-camera expo-image-manipulator
    ```
-3. Update `API_URL` inside `mobile-app/App.js` with your API Gateway invoke URL (e.g., `https://abc123.execute-api.us-east-1.amazonaws.com/prod/analyze-food`).
-4. Start the development server:
+3. Update `API_URL` inside `mobile-app/App.tsx` with your API Gateway invoke URL (e.g., `https://abc123.execute-api.us-east-1.amazonaws.com/prod/analyze-food`).
+4. Start the development server (Metro compiles the TypeScript entrypoint automatically):
    ```sh
    npx expo start
    ```

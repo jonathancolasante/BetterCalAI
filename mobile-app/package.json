@@ -8,11 +8,16 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
-    "expo": "^51.0.0",
-    "expo-camera": "~15.0.8",
-    "expo-image-manipulator": "~12.0.4",
+    "expo": "^54.0.23",
+    "expo-camera": "~15.0.16",
+    "expo-image-manipulator": "~12.0.5",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
-    "react-native": "0.74.2"
+    "react-native": "^0.82.1"
+  },
+  "devDependencies": {
+    "@types/react": "~18.2.79",
+    "@types/react-native": "~0.73.0",
+    "typescript": "^5.4.0"
   }
 }

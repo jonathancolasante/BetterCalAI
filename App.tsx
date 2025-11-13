@@ -10,21 +10,26 @@ import {
 import {
   CameraView,
   useCameraPermissions,
-  type CameraViewRef,
+  type CameraCapturedPicture,
 } from 'expo-camera';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { StatusBar } from 'expo-status-bar';
 
 type Step = 'camera' | 'uploading' | 'result';
 
 type FoodResponse = {
+  file_key?: string;
   food?: string;
   ingredients?: string[];
   calories?: number;
+  macros?: {
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  };
   error?: string;
 };
 
-// TODO: replace with your API Gateway invoke URL
 const API_URL =
   'https://w0swuxypu7.execute-api.us-east-2.amazonaws.com/Dev/analyze';
 const API_KEY = 'DuVVUxNjFb9mH0pMCMMJW2iagBYuAY3J3cBltb2A';
@@ -34,7 +39,7 @@ const App: React.FC = () => {
   const [step, setStep] = useState<Step>('camera');
   const [result, setResult] = useState<FoodResponse | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
-  const cameraRef = useRef<CameraViewRef | null>(null);
+  const cameraRef = useRef<any>(null);
 
   if (!permission) {
     return <View style={styles.container} />;
@@ -60,19 +65,19 @@ const App: React.FC = () => {
     }
 
     try {
-      const photo = await camera.takePicture({
+      const photo: CameraCapturedPicture = await camera.takePictureAsync({
         base64: true,
         quality: 0.7,
       });
-      const resized = await ImageManipulator.manipulateAsync(
-        photo.uri,
-        [{ resize: { width: 800 } }],
-        {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-          base64: true,
-        }
-      );
+      const imageRef = await ImageManipulator.manipulate(photo.uri)
+        .resize({ width: 800 })
+        .renderAsync();
+
+      const resized = await imageRef.saveAsync({
+        compress: 0.7,
+        format: SaveFormat.JPEG,
+        base64: true,
+      });
 
       if (!resized.base64) {
         throw new Error('Failed to encode image');
@@ -117,9 +122,7 @@ const App: React.FC = () => {
       {step === 'camera' && (
         <>
           <CameraView
-            ref={(ref) => {
-              cameraRef.current = ref as CameraViewRef | null;
-            }}
+            ref={cameraRef}
             style={styles.camera}
             facing="back"
           />
@@ -155,6 +158,13 @@ const App: React.FC = () => {
                 Ingredients: {result?.ingredients?.join(', ') || 'n/a'}
               </Text>
               <Text>Calories: {result?.calories ?? 'n/a'}</Text>
+              {result?.macros && (
+                <View style={styles.macrosRow}>
+                  <Text style={styles.macro}>Protein: {result.macros.protein ?? 'n/a'}g</Text>
+                  <Text style={styles.macro}>Carbs: {result.macros.carbs ?? 'n/a'}g</Text>
+                  <Text style={styles.macro}>Fat: {result.macros.fat ?? 'n/a'}g</Text>
+                </View>
+              )}
             </>
           )}
           <TouchableOpacity style={styles.button} onPress={reset}>
@@ -194,6 +204,13 @@ const styles = StyleSheet.create({
   infoText: { marginTop: 12, textAlign: 'center' },
   errorText: { color: 'red', fontWeight: '600', marginBottom: 12 },
   resultTitle: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
+  macrosRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 12,
+  },
+  macro: { fontWeight: '600' },
 });
 
 export default App;

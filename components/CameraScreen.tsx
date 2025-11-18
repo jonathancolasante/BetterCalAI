@@ -53,13 +53,18 @@ export function CameraScreen({ onCapture, onBack }: CameraScreenProps) {
       });
 
       if (photo?.uri) {
-        // Resize image for better performance
+        // Resize image and get base64 for AWS upload
         const manipResult = await ImageManipulator.manipulateAsync(
           photo.uri,
           [{ resize: { width: 800 } }],
-          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
         );
-        onCapture(manipResult.uri);
+        
+        // Pass both uri (for display) and base64 (for AWS) - we'll encode as JSON
+        onCapture(JSON.stringify({ 
+          uri: manipResult.uri, 
+          base64: manipResult.base64 
+        }));
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to take picture');

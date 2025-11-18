@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { FoodResponse } from './ProcessingScreen';
 
 interface MealDetailsScreenProps {
   image: string;
@@ -10,6 +11,7 @@ interface MealDetailsScreenProps {
   meal?: any;
   isViewMode?: boolean;
   onUpdate?: (meal: any) => void;
+  analysisResult?: FoodResponse | null;
 }
 
 interface Ingredient {
@@ -18,8 +20,8 @@ interface Ingredient {
   calories: number;
 }
 
-export function MealDetailsScreen({ image, onBack, onSave, meal, isViewMode = false }: MealDetailsScreenProps) {
-  // Use provided meal data if in view mode, otherwise use default analysis data
+export function MealDetailsScreen({ image, onBack, onSave, meal, isViewMode = false, analysisResult }: MealDetailsScreenProps) {
+  // Use provided meal data if in view mode, otherwise use AWS analysis data
   const defaultMealData = isViewMode && meal ? {
     name: meal.name,
     time: meal.time,
@@ -33,7 +35,22 @@ export function MealDetailsScreen({ image, onBack, onSave, meal, isViewMode = fa
       portion: '~100g',
       calories: Math.round(meal.calories / (meal.items?.length || 1))
     })) || []
+  } : analysisResult && !analysisResult.error ? {
+    // Use AWS API analysis result
+    name: analysisResult.food || 'Unknown Food',
+    time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    calories: analysisResult.calories || 0,
+    protein: analysisResult.macros?.protein || 0,
+    carbs: analysisResult.macros?.carbs || 0,
+    fat: analysisResult.macros?.fat || 0,
+    mealType: 'lunch',
+    ingredients: analysisResult.ingredients?.map((item: string) => ({
+      name: item,
+      portion: '~100g',
+      calories: Math.round((analysisResult.calories || 0) / (analysisResult.ingredients?.length || 1))
+    })) || []
   } : {
+    // Fallback to default if no analysis or error
     name: 'Grilled Chicken Salad',
     time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
     calories: 425,

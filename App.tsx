@@ -5,7 +5,7 @@ import { MobileContainer } from './components/MobileContainer';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { CameraScreen } from './components/CameraScreen';
-import { ProcessingScreen } from './components/ProcessingScreen';
+import { ProcessingScreen, type FoodResponse } from './components/ProcessingScreen';
 import { MealDetailsScreen } from './components/MealDetailsScreen';
 import { HistoryScreen } from './components/HistoryScreen';
 import { ProfileScreen } from './components/ProfileScreen';
@@ -15,6 +15,7 @@ type Screen = 'onboarding' | 'home' | 'camera' | 'processing' | 'mealDetails' | 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
   const [capturedImage, setCapturedImage] = useState<string>('');
+  const [analysisResult, setAnalysisResult] = useState<FoodResponse | null>(null);
   const [meals, setMeals] = useState<any[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
 
@@ -31,7 +32,9 @@ export default function App() {
     setCurrentScreen('processing');
   };
 
-  const handleProcessingComplete = () => {
+  const handleProcessingComplete = (result: FoodResponse | null, imageUri: string) => {
+    setAnalysisResult(result);
+    setCapturedImage(imageUri); // Update to the actual URI for display
     setCurrentScreen('mealDetails');
   };
 
@@ -90,6 +93,7 @@ export default function App() {
             image={capturedImage}
             onBack={handleBack}
             onSave={handleSaveMeal}
+            analysisResult={analysisResult}
           />
         )}
         {currentScreen === 'history' && (

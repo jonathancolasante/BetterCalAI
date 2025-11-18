@@ -1,15 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, Animated } from 'react-native';
+import { View, Text, Image, StyleSheet, Animated, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
+// Use environment variables for sensitive data
+const API_URL = process.env.EXPO_PUBLIC_AWS_API_URL;
+const API_KEY = process.env.EXPO_PUBLIC_AWS_API_KEY;
+
+export type FoodResponse = {
+  file_key?: string;
+  food?: string;
+  ingredients?: string[];
+  calories?: number;
+  macros?: {
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  };
+  error?: string;
+};
+
 interface ProcessingScreenProps {
   image: string;
-  onComplete: () => void;
+  onComplete: (result: FoodResponse | null, imageUri: string) => void;
 }
 
 export function ProcessingScreen({ image, onComplete }: ProcessingScreenProps) {
   const [step, setStep] = useState(0);
+  const [isAnalyzing, setIsAnalyzing] = useState(true);
   const pulseAnim = new Animated.Value(1);
 
   const steps = [
@@ -35,19 +53,74 @@ export function ProcessingScreen({ image, onComplete }: ProcessingScreenProps) {
       ])
     ).start();
 
-    // Step progression
-    const interval = setInterval(() => {
-      setStep((prev) => {
-        if (prev >= steps.length - 1) {
-          setTimeout(() => onComplete(), 500);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 1500);
+    // Parse image data (could be JSON string with uri+base64 or just uri)
+    let imageUri = '';
+    let imageBase64 = '';
+    
+    try {
+      const imageData = JSON.parse(image);
+      imageUri = imageData.uri;
+      imageBase64 = imageData.base64;
+    } catch {
+      // If not JSON, it's just a uri (backward compatibility)
+      imageUri = image;
+    }
 
-    return () => clearInterval(interval);
-  }, [onComplete]);
+    // Call AWS API
+    const analyzeImage = async () => {
+      try {
+        if (!imageBase64) {
+          throw new Error('No base64 image data available');
+        }
+
+        // Simulate step progression while API is being called
+        const stepInterval = setInterval(() => {
+          setStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+        }, 1500);
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+          body: JSON.stringify({ image: imageBase64 }),
+        });
+
+        clearInterval(stepInterval);
+        setStep(steps.length - 1);
+
+        const data = (await response.json()) as FoodResponse;
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Analysis failed');
+        }
+
+        // Wait a moment to show the final step
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          onComplete(data, imageUri);
+        }, 500);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Analysis failed';
+        Alert.alert('Error', message);
+        setIsAnalyzing(false);
+        onComplete({ error: message }, imageUri);
+      }
+    };
+
+    analyzeImage();
+  }, [image]);
+
+  // Parse image URI for display
+  let displayUri = image;
+  try {
+    const imageData = JSON.parse(image);
+    displayUri = imageData.uri;
+  } catch {
+    // If not JSON, use as is
+    displayUri = image;
+  }
 
   return (
     <LinearGradient
@@ -62,7 +135,7 @@ export function ProcessingScreen({ image, onComplete }: ProcessingScreenProps) {
             { transform: [{ scale: pulseAnim }] }
           ]}
         >
-          <Image source={{ uri: image }} style={styles.image} />
+          <Image source={{ uri: displayUri }} style={styles.image} />
           <LinearGradient
             colors={['rgba(147, 51, 234, 0.2)', 'rgba(59, 130, 246, 0.2)']}
             style={styles.imageOverlay}

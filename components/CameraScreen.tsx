@@ -13,6 +13,7 @@ interface CameraScreenProps {
 export function CameraScreen({ onCapture, onBack }: CameraScreenProps) {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
+  const [tipsOpen, setTipsOpen] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
@@ -96,12 +97,39 @@ export function CameraScreen({ onCapture, onBack }: CameraScreenProps) {
           <View style={[styles.corner, styles.cornerBottomRight]} />
         </View>
 
-        {/* Tip */}
+        {/* Auto-Calibration Tips - Expandable */}
         <View style={styles.tipContainer}>
-          <View style={styles.tipBadge}>
-            <Ionicons name="flash" size={16} color="#fbbf24" />
-            <Text style={styles.tipText}>Center your food in the frame</Text>
-          </View>
+          <TouchableOpacity 
+            onPress={() => setTipsOpen(!tipsOpen)}
+            style={styles.tipBadge}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="information-circle-outline" size={16} color="white" />
+            <Text style={styles.tipText}>Tips</Text>
+            <Ionicons 
+              name={tipsOpen ? "chevron-up" : "chevron-down"} 
+              size={16} 
+              color="white" 
+              style={{ marginLeft: 4 }}
+            />
+          </TouchableOpacity>
+          
+          {tipsOpen && (
+            <View style={styles.tipsExpanded}>
+              <View style={styles.tipItem}>
+                <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                <Text style={styles.tipItemText}>Place food on flat surface</Text>
+              </View>
+              <View style={styles.tipItem}>
+                <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                <Text style={styles.tipItemText}>Ensure good lighting</Text>
+              </View>
+              <View style={styles.tipItem}>
+                <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                <Text style={styles.tipItemText}>Center food in frame</Text>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Bottom Controls */}
@@ -135,9 +163,12 @@ export function CameraScreen({ onCapture, onBack }: CameraScreenProps) {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.captureHint}>
-            Tap to capture or select from gallery
-          </Text>
+          <View style={styles.captureHintContainer}>
+            <Ionicons name="camera" size={20} color="white" />
+            <Text style={styles.captureHint}>
+              TAP CENTER BUTTON TO CAPTURE
+            </Text>
+          </View>
         </View>
       </CameraView>
     </View>
@@ -255,26 +286,49 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
   },
 
-  // Tip
+  // Tips - Expandable
   tipContainer: {
     position: 'absolute',
-    top: '20%',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+    top: 120,
+    right: 24,
+    alignItems: 'flex-end',
   },
   tipBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   tipText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+  tipsExpanded: {
+    marginTop: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    minWidth: 200,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tipItemText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 8,
+    flex: 1,
   },
 
   // Controls
@@ -326,10 +380,19 @@ const styles = StyleSheet.create({
   captureButtonGradient: {
     flex: 1,
   },
+  captureHintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   captureHint: {
+    color: 'white',
+    fontSize: 15,
     textAlign: 'center',
-    color: '#9ca3af',
-    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 8,
+    letterSpacing: 1,
   },
 });
+
 

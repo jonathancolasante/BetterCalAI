@@ -1,19 +1,45 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, Switch, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface ProfileScreenProps {
   onBack: () => void;
+  onLogout: () => void;
 }
 
-export function ProfileScreen({ onBack }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, onLogout }: ProfileScreenProps) {
   const [height, setHeight] = useState('175');
   const [weight, setWeight] = useState('70');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(true);
 
   const bmi = (parseFloat(weight) / ((parseFloat(height) / 100) ** 2)).toFixed(1);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: () => {
+            // TODO: Integrate AWS Cognito sign out here
+            // Example:
+            // import { signOut } from 'aws-amplify/auth';
+            // await signOut();
+            onLogout();
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const menuItems = [
     { icon: 'trophy-outline', label: 'Daily Goal', value: '2,000 kcal', color: '#10b981', bg: '#d1fae5' },
@@ -190,10 +216,12 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.logoutButton} activeOpacity={0.7} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#dc2626" />
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
+        
+        <Text style={styles.versionText}>Version 1.0.0</Text>
       </ScrollView>
     </LinearGradient>
   );
@@ -469,12 +497,20 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'white',
     borderRadius: 16,
-    marginBottom: 32,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
   },
   logoutText: {
     fontSize: 16,
     fontWeight: '500',
     color: '#dc2626',
+  },
+  versionText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#9ca3af',
+    marginBottom: 32,
   },
 });
 

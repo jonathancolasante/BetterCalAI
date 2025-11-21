@@ -3,6 +3,9 @@ import { SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MobileContainer } from './components/MobileContainer';
 import { OnboardingScreen } from './components/OnboardingScreen';
+import { LoginScreen } from './components/LoginScreen';
+import { SignUpScreen } from './components/SignUpScreen';
+import { ProfileSetupScreen, type ProfileData } from './components/ProfileSetupScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { CameraScreen } from './components/CameraScreen';
 import { ProcessingScreen, type FoodResponse } from './components/ProcessingScreen';
@@ -10,7 +13,7 @@ import { MealDetailsScreen } from './components/MealDetailsScreen';
 import { HistoryScreen } from './components/HistoryScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 
-type Screen = 'onboarding' | 'home' | 'camera' | 'processing' | 'mealDetails' | 'history' | 'profile' | 'viewMeal';
+type Screen = 'onboarding' | 'login' | 'signup' | 'profileSetup' | 'home' | 'camera' | 'processing' | 'mealDetails' | 'history' | 'profile' | 'viewMeal';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
@@ -18,9 +21,51 @@ export default function App() {
   const [analysisResult, setAnalysisResult] = useState<FoodResponse | null>(null);
   const [meals, setMeals] = useState<any[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userProfile, setUserProfile] = useState<ProfileData | null>(null);
 
   const handleOnboardingComplete = () => {
+    setCurrentScreen('login');
+  };
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    // TODO: Check if user has completed profile setup
+    // For now, assuming existing users have profile data
     setCurrentScreen('home');
+  };
+
+  const handleSignUpSuccess = () => {
+    setIsAuthenticated(true);
+    // New users need to complete profile setup
+    setCurrentScreen('profileSetup');
+  };
+
+  const handleProfileSetupComplete = (profileData: ProfileData) => {
+    setUserProfile(profileData);
+    // TODO: Save profile data to backend/Cognito
+    setCurrentScreen('home');
+  };
+
+  const handleNavigateToSignUp = () => {
+    setCurrentScreen('signup');
+  };
+
+  const handleNavigateToLogin = () => {
+    setCurrentScreen('login');
+  };
+
+  const handleLogout = () => {
+    // Clear authentication state
+    setIsAuthenticated(false);
+    setUserProfile(null);
+    setMeals([]);
+    setSelectedMeal(null);
+    setAnalysisResult(null);
+    setCapturedImage('');
+    
+    // Navigate to login screen
+    setCurrentScreen('login');
   };
 
   const handleAddMeal = () => {
@@ -69,9 +114,24 @@ export default function App() {
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar style="auto" />
       <MobileContainer>
-        {currentScreen === 'onboarding' && (
-          <OnboardingScreen onComplete={handleOnboardingComplete} />
-        )}
+      {currentScreen === 'onboarding' && (
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      )}
+      {currentScreen === 'login' && (
+        <LoginScreen
+          onLoginSuccess={handleLoginSuccess}
+          onNavigateToSignUp={handleNavigateToSignUp}
+        />
+      )}
+      {currentScreen === 'signup' && (
+        <SignUpScreen
+          onSignUpSuccess={handleSignUpSuccess}
+          onNavigateToLogin={handleNavigateToLogin}
+        />
+      )}
+      {currentScreen === 'profileSetup' && (
+        <ProfileSetupScreen onComplete={handleProfileSetupComplete} />
+      )}
         {currentScreen === 'home' && (
           <HomeScreen
             onAddMeal={handleAddMeal}
@@ -108,9 +168,9 @@ export default function App() {
             onUpdate={handleUpdateMeal}
           />
         )}
-        {currentScreen === 'profile' && (
-          <ProfileScreen onBack={handleBack} />
-        )}
+      {currentScreen === 'profile' && (
+        <ProfileScreen onBack={handleBack} onLogout={handleLogout} />
+      )}
       </MobileContainer>
     </SafeAreaView>
   );

@@ -65,17 +65,21 @@ git clone https://github.com/yourusername/BetterCalAI.git
 cd BetterCalAI
 ```
 
-2. **Install dependencies**
+2. **Create a .env file**
+EXPO_PUBLIC_AWS_API_KEY = INSERT_KEY
+EXPO_PUBLIC_AWS_API_URL = INSERT_URL
+
+3. **Install dependencies**
 ```bash
 npm install
 ```
 
-3. **Start the app**
+4. **Start the app**
 ```bash
 npx expo start
 ```
 
-4. **Scan QR code** with Expo Go app (iOS/Android)
+5. **Scan QR code** with Expo Go app (iOS/Android)
 
 ## 📱 Usage
 

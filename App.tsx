@@ -1,216 +1,177 @@
-import React, { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  CameraView,
-  useCameraPermissions,
-  type CameraCapturedPicture,
-} from 'expo-camera';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { useState } from 'react';
+import { SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { MobileContainer } from './components/MobileContainer';
+import { OnboardingScreen } from './components/OnboardingScreen';
+import { LoginScreen } from './components/LoginScreen';
+import { SignUpScreen } from './components/SignUpScreen';
+import { ProfileSetupScreen, type ProfileData } from './components/ProfileSetupScreen';
+import { HomeScreen } from './components/HomeScreen';
+import { CameraScreen } from './components/CameraScreen';
+import { ProcessingScreen, type FoodResponse } from './components/ProcessingScreen';
+import { MealDetailsScreen } from './components/MealDetailsScreen';
+import { HistoryScreen } from './components/HistoryScreen';
+import { ProfileScreen } from './components/ProfileScreen';
 
-type Step = 'camera' | 'uploading' | 'result';
+type Screen = 'onboarding' | 'login' | 'signup' | 'profileSetup' | 'home' | 'camera' | 'processing' | 'mealDetails' | 'history' | 'profile' | 'viewMeal';
 
-type FoodResponse = {
-  file_key?: string;
-  food?: string;
-  ingredients?: string[];
-  calories?: number;
-  macros?: {
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-  };
-  error?: string;
-};
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
+  const [capturedImage, setCapturedImage] = useState<string>('');
+  const [analysisResult, setAnalysisResult] = useState<FoodResponse | null>(null);
+  const [meals, setMeals] = useState<any[]>([]);
+  const [selectedMeal, setSelectedMeal] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userProfile, setUserProfile] = useState<ProfileData | null>(null);
 
-const API_URL =
-  'https://w0swuxypu7.execute-api.us-east-2.amazonaws.com/Dev/analyze';
-const API_KEY = 'DuVVUxNjFb9mH0pMCMMJW2iagBYuAY3J3cBltb2A';
-
-const App: React.FC = () => {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [step, setStep] = useState<Step>('camera');
-  const [result, setResult] = useState<FoodResponse | null>(null);
-  const [previewUri, setPreviewUri] = useState<string | null>(null);
-  const cameraRef = useRef<any>(null);
-
-  if (!permission) {
-    return <View style={styles.container} />;
-  }
-
-  if (!permission.granted) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.permissionText}>
-          Personal Food Log needs camera access.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const takePhoto = async () => {
-    const camera = cameraRef.current;
-    if (!camera) {
-      return;
-    }
-
-    try {
-      const photo: CameraCapturedPicture = await camera.takePictureAsync({
-        base64: true,
-        quality: 0.7,
-      });
-      const imageRef = await ImageManipulator.manipulate(photo.uri)
-        .resize({ width: 800 })
-        .renderAsync();
-
-      const resized = await imageRef.saveAsync({
-        compress: 0.7,
-        format: SaveFormat.JPEG,
-        base64: true,
-      });
-
-      if (!resized.base64) {
-        throw new Error('Failed to encode image');
-      }
-
-      setPreviewUri(resized.uri);
-      setStep('uploading');
-
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-        },
-        body: JSON.stringify({ image: resized.base64 }),
-      });
-
-      const data = (await response.json()) as FoodResponse;
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      setResult(data);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Upload failed';
-      setResult({ error: message });
-    } finally {
-      setStep('result');
-    }
+  const handleOnboardingComplete = () => {
+    setCurrentScreen('login');
   };
 
-  const reset = () => {
-    setResult(null);
-    setPreviewUri(null);
-    setStep('camera');
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    // TODO: Check if user has completed profile setup
+    // For now, assuming existing users have profile data
+    setCurrentScreen('home');
+  };
+
+  const handleSignUpSuccess = () => {
+    setIsAuthenticated(true);
+    // New users need to complete profile setup
+    setCurrentScreen('profileSetup');
+  };
+
+  const handleProfileSetupComplete = (profileData: ProfileData) => {
+    setUserProfile(profileData);
+    // TODO: Save profile data to backend/Cognito
+    setCurrentScreen('home');
+  };
+
+  const handleNavigateToSignUp = () => {
+    setCurrentScreen('signup');
+  };
+
+  const handleNavigateToLogin = () => {
+    setCurrentScreen('login');
+  };
+
+  const handleLogout = () => {
+    // Clear authentication state
+    setIsAuthenticated(false);
+    setUserProfile(null);
+    setMeals([]);
+    setSelectedMeal(null);
+    setAnalysisResult(null);
+    setCapturedImage('');
+    
+    // Navigate to login screen
+    setCurrentScreen('login');
+  };
+
+  const handleAddMeal = () => {
+    setCurrentScreen('camera');
+  };
+
+  const handleCapture = (image: string) => {
+    setCapturedImage(image);
+    setCurrentScreen('processing');
+  };
+
+  const handleProcessingComplete = (result: FoodResponse | null, imageUri: string) => {
+    setAnalysisResult(result);
+    setCapturedImage(imageUri); // Update to the actual URI for display
+    setCurrentScreen('mealDetails');
+  };
+
+  const handleSaveMeal = (meal: any) => {
+    setMeals([meal, ...meals]);
+    setCurrentScreen('home');
+  };
+
+  const handleUpdateMeal = (updatedMeal: any) => {
+    setMeals(meals.map(m => m.id === updatedMeal.id ? updatedMeal : m));
+    setSelectedMeal(updatedMeal);
+  };
+
+  const handleNavigate = (screen: string) => {
+    setCurrentScreen(screen as Screen);
+  };
+
+  const handleBack = () => {
+    setCurrentScreen('home');
+  };
+
+  const handleMealClick = (meal: any) => {
+    setSelectedMeal(meal);
+    setCurrentScreen('viewMeal');
+  };
+
+  const handleBackToHistory = () => {
+    setCurrentScreen('history');
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      {step === 'camera' && (
-        <>
-          <CameraView
-            ref={cameraRef}
-            style={styles.camera}
-            facing="back"
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar style="auto" />
+      <MobileContainer>
+      {currentScreen === 'onboarding' && (
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      )}
+      {currentScreen === 'login' && (
+        <LoginScreen
+          onLoginSuccess={handleLoginSuccess}
+          onNavigateToSignUp={handleNavigateToSignUp}
+        />
+      )}
+      {currentScreen === 'signup' && (
+        <SignUpScreen
+          onSignUpSuccess={handleSignUpSuccess}
+          onNavigateToLogin={handleNavigateToLogin}
+        />
+      )}
+      {currentScreen === 'profileSetup' && (
+        <ProfileSetupScreen onComplete={handleProfileSetupComplete} />
+      )}
+        {currentScreen === 'home' && (
+          <HomeScreen
+            onAddMeal={handleAddMeal}
+            onNavigate={handleNavigate}
+            meals={meals}
           />
-          <TouchableOpacity style={styles.captureButton} onPress={takePhoto}>
-            <Text style={styles.buttonText}>Snap & Analyze</Text>
-          </TouchableOpacity>
-        </>
+        )}
+        {currentScreen === 'camera' && (
+          <CameraScreen onCapture={handleCapture} onBack={handleBack} />
+        )}
+        {currentScreen === 'processing' && (
+          <ProcessingScreen
+            image={capturedImage}
+            onComplete={handleProcessingComplete}
+          />
+        )}
+        {currentScreen === 'mealDetails' && (
+          <MealDetailsScreen
+            image={capturedImage}
+            onBack={handleBack}
+            onSave={handleSaveMeal}
+            analysisResult={analysisResult}
+          />
+        )}
+        {currentScreen === 'history' && (
+          <HistoryScreen onBack={handleBack} meals={meals} onMealClick={handleMealClick} />
+        )}
+        {currentScreen === 'viewMeal' && selectedMeal && (
+          <MealDetailsScreen
+            image={selectedMeal.image}
+            onBack={handleBackToHistory}
+            meal={selectedMeal}
+            isViewMode={true}
+            onUpdate={handleUpdateMeal}
+          />
+        )}
+      {currentScreen === 'profile' && (
+        <ProfileScreen onBack={handleBack} onLogout={handleLogout} />
       )}
-
-      {step === 'uploading' && (
-        <View style={styles.center}>
-          {previewUri && (
-            <Image source={{ uri: previewUri }} style={styles.preview} />
-          )}
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.infoText}>Uploading to AWS and analyzing...</Text>
-        </View>
-      )}
-
-      {step === 'result' && (
-        <View style={styles.center}>
-          {previewUri && (
-            <Image source={{ uri: previewUri }} style={styles.preview} />
-          )}
-          {result?.error ? (
-            <Text style={styles.errorText}>{result.error}</Text>
-          ) : (
-            <>
-              <Text style={styles.resultTitle}>
-                {result?.food || 'Unknown food'}
-              </Text>
-              <Text>
-                Ingredients: {result?.ingredients?.join(', ') || 'n/a'}
-              </Text>
-              <Text>Calories: {result?.calories ?? 'n/a'}</Text>
-              {result?.macros && (
-                <View style={styles.macrosRow}>
-                  <Text style={styles.macro}>Protein: {result.macros.protein ?? 'n/a'}g</Text>
-                  <Text style={styles.macro}>Carbs: {result.macros.carbs ?? 'n/a'}g</Text>
-                  <Text style={styles.macro}>Fat: {result.macros.fat ?? 'n/a'}g</Text>
-                </View>
-              )}
-            </>
-          )}
-          <TouchableOpacity style={styles.button} onPress={reset}>
-            <Text style={styles.buttonText}>Analyze Another</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+      </MobileContainer>
+    </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  camera: { flex: 1 },
-  captureButton: {
-    padding: 18,
-    alignItems: 'center',
-    backgroundColor: '#007AFF',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#fff',
-  },
-  button: {
-    marginTop: 16,
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  permissionText: { fontSize: 16, textAlign: 'center' },
-  preview: { width: 220, height: 220, marginBottom: 16, borderRadius: 12 },
-  infoText: { marginTop: 12, textAlign: 'center' },
-  errorText: { color: 'red', fontWeight: '600', marginBottom: 12 },
-  resultTitle: { fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  macrosRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 12,
-  },
-  macro: { fontWeight: '600' },
-});
-
-export default App;
+}

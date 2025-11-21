@@ -5,20 +5,25 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "ios": "expo start --ios"
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   },
   "dependencies": {
-    "@types/react": "~19.1.10",
-    "expo": "^54.0.23",
-    "expo-camera": "~17.0.9",
-    "expo-image-manipulator": "14.0.7",
-    "expo-status-bar": "~3.0.8",
+    "expo": "~54.0.0",
+    "expo-camera": "~17.0.0",
+    "expo-image-manipulator": "~14.0.0",
+    "expo-linear-gradient": "~15.0.7",
+    "expo-status-bar": "~3.0.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
-    "typescript": "~5.9.2"
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "15.12.1"
   },
   "devDependencies": {
-    "@types/react": "~19.1.10",
-    "typescript": "~5.9.2"
+    "@babel/core": "^7.25.0",
+    "@types/react": "~19.1.0",
+    "babel-preset-expo": "~12.0.2",
+    "typescript": "~5.3.3"
   }
 }

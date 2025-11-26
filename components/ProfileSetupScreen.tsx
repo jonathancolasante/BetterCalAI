@@ -22,7 +22,7 @@ export function ProfileSetupScreen({ onComplete }: ProfileSetupScreenProps) {
   const [weight, setWeight] = useState('70'); // Default value
   const [sex, setSex] = useState<Sex>(null);
   const [goal, setGoal] = useState<Goal>(null);
-  const [step, setStep] = useState(2); // Skip step 1
+  const [step, setStep] = useState(1); // Start with step 1
 
   const sexOptions = [
     { value: 'male' as const, label: 'Male', icon: 'male', color: '#3b82f6' },
@@ -70,7 +70,7 @@ export function ProfileSetupScreen({ onComplete }: ProfileSetupScreenProps) {
   };
 
   const handleBack = () => {
-    if (step > 2) setStep(step - 1); // Can't go back to step 1
+    if (step > 1) setStep(step - 1);
   };
 
   return (
